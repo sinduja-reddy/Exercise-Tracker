@@ -5,7 +5,7 @@ const shortid = require('shortid');
 
 
 const cors = require('cors')
-
+let num;
 const mongoose = require('mongoose');
 mongoose.connect(process.env.MLAB_URI );
 mongoose.Promise = global.Promise;
@@ -23,6 +23,7 @@ var userSchema= mongoose.Schema({
 var UserEntry = mongoose.model('UserEntry', userSchema);
 
 var userExerciseSchema= mongoose.Schema({
+  username:String,
   userid: String,
   description: String,
   duration:Number,
@@ -56,16 +57,54 @@ function insertUser(user){
 
 
 app.post('/api/exercise/add',(req,res)=>{
-      var excercise= req.body;
-  res.send(excercise);
+  let exer=req.body;
+  insertUserExercise(exer).then((doc)=>{
+    if(!doc){
+      res.send("userid doesn't exist");
+    }else{
+      res.json({username:doc.username,userid:doc.userid, description:doc.description,date: new Date(doc.date)});
+    }
+  })
 
 });
-function insertUserExercise(user){
-  let newUser= new UserEntry({
-      username:user,
-      userid: shortid.generate()
+function insertUserExercise(add){
+  let user_id= add.userId;
+ return findUserId(user_id).then((exists)=>{
+   if(exists){
+   let newAdd= new UserExerciseEntry({
+      username: exists,
+      userid: add.userId,
+      description: add.description,
+      date:add.date
     });
-    return newUser.save()
+    return newAdd.save()
+   }
+ });
+}
+function findUserId(user_id){
+  return  UserEntry.findOne({userid: user_id}).then((doc)=>{
+    return doc? doc.username:false;
+  });
+}
+
+app.get('/api/exercise/log',(req,res)=>{
+  let userId= req.query.userId;
+  let arr;
+  findOut(userId).then((doc)=>{ 
+    arr= doc.map((d)=>{
+                return {
+                  description:d.description,
+                  duration:d.duration
+                }
+                });
+    res.send(arr);
+  })
+})
+
+function findOut(userId){
+    let array= UserExerciseEntry.find({userid:userId});
+
+return array;
 }
 
 // Not found middleware
