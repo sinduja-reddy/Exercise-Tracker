@@ -1,23 +1,48 @@
 const express = require('express')
 const app = express()
 const bodyParser = require('body-parser')
+const shortid = require('shortid');
+
 
 const cors = require('cors')
 
 const mongoose = require('mongoose')
 mongoose.connect(process.env.MLAB_URI || 'mongodb://localhost/exercise-track' )
+mongoose.Promise = global.Promise;
+
 
 app.use(cors())
 
 app.use(bodyParser.urlencoded({extended: false}))
 app.use(bodyParser.json())
 
+var userSchema= mongoose.Schema({
+  username: String,
+  id:{ type: Number, index:true}
+});
+var UserEntry = mongoose.model('UserEntry', userSchema);
+
+
 
 app.use(express.static('public'))
 app.get('/', (req, res) => {
   res.sendFile(__dirname + '/views/index.html')
 });
+app.post('/api/exercise/new-user',(req,res)=>{
+      var user= req.body.username;
+  res.send(user);
+  });
 
+app.post('/api/exercise/add',(req,res)=>{
+      var excercise= req.body;
+  res.send(excercise);
+
+});
+
+function insertUser(){
+  let id= shortid.generate();
+  return id;
+}
 
 // Not found middleware
 app.use((req, res, next) => {
