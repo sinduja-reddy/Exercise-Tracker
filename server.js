@@ -5,7 +5,7 @@ const shortid = require('shortid');
 
 
 const cors = require('cors')
-let num;
+
 const mongoose = require('mongoose');
 mongoose.connect(process.env.MLAB_URI );
 mongoose.Promise = global.Promise;
@@ -15,7 +15,7 @@ app.use(cors())
 
 app.use(bodyParser.urlencoded({extended: false}))
 app.use(bodyParser.json())
-
+//user schema
 var userSchema= mongoose.Schema({
   username: String,
   userid:{ type: String, index:true}
@@ -54,6 +54,7 @@ app.get('/', (req, res) => {
    })
    
 });
+
 function insertUser(user){
   let newUser= new UserEntry({
       username:user,
@@ -61,14 +62,12 @@ function insertUser(user){
     });
     return newUser.save()
 }
+
 function isDuplicateUser(user){
      return UserEntry.findOne({'username': user}).then((doc)=>{
        return doc? doc.userid: false;
      })
-
-
 }
-
 
 
 app.post('/api/exercise/add',(req,res)=>{
@@ -82,6 +81,7 @@ app.post('/api/exercise/add',(req,res)=>{
   })
 
 });
+
 function insertUserExercise(add){
   let user_id= add.userId;
  return findUserId(user_id).then((exists)=>{
@@ -97,6 +97,7 @@ function insertUserExercise(add){
    }
  });
 }
+
 function findUserId(user_id){
   return  UserEntry.findOne({userid: user_id}).then((doc)=>{
     return doc? doc.username:false;
