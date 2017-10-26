@@ -72,11 +72,14 @@ function isDuplicateUser(user){
 
 app.post('/api/exercise/add',(req,res)=>{
   let exer=req.body;
+  
   insertUserExercise(exer).then((doc)=>{
     if(!doc){
       res.send("userid doesn't exist");
     }else{
-      res.json({username:doc.username,userid:doc.userid, description:doc.description,date: new Date(doc.date)});
+      let date=new Date(doc.date);
+  let month=date.getMonth()+1;
+      res.json({username:doc.username,userid:doc.userid, duration:doc.duration,description:doc.description,date:date.getDate()+'-'+month+'-'+date.getFullYear()});
     }
   })
 
@@ -84,6 +87,7 @@ app.post('/api/exercise/add',(req,res)=>{
 
 function insertUserExercise(add){
   let user_id= add.userId;
+  
  return findUserId(user_id).then((exists)=>{
    if(exists){
    let newAdd= new UserExerciseEntry({
@@ -91,7 +95,7 @@ function insertUserExercise(add){
       userid: add.userId,
       description: add.description,
      duration: add.duration,
-      date:add.date
+      date: add.date
     });
     return newAdd.save()
    }
@@ -111,10 +115,12 @@ app.get('/api/exercise/log',(req,res)=>{
   findOut(userId).then((doc)=>{ 
     length=doc.length;
     arr= doc.map((d)=>{
+      let date=new Date(d.date);
+      let month= date.getMonth()+1;
                 return {
                   description:d.description,
                   duration: d.duration,
-                  date:d.date
+                  date:date.getDate()+'-'+month+'-'+date.getFullYear()
                 }
                 });
     res.json({userid:userId, count:length, log:arr});
