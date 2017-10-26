@@ -38,13 +38,21 @@ app.get('/', (req, res) => {
 
  app.post('/api/exercise/new-user',(req,res)=>{
      let user= req.body.username;
-   insertUser(user).then((doc)=>{
+    isDuplicateUser(user).then((exist)=>{
+     if(exist){
+       res.send('username already exists');
+     }
+     else{
+       insertUser(user).then((doc)=>{
      if(!doc){
        res.send('unknown err');
      }else{
           res.json({username:user,id:doc.userid});
      }
   });
+     }
+   })
+   
 });
 function insertUser(user){
   let newUser= new UserEntry({
@@ -52,6 +60,13 @@ function insertUser(user){
       userid: shortid.generate()
     });
     return newUser.save()
+}
+function isDuplicateUser(user){
+     return UserEntry.findOne({'username': user}).then((doc)=>{
+       return doc? doc.userid: false;
+     })
+
+
 }
 
 
@@ -75,6 +90,7 @@ function insertUserExercise(add){
       username: exists,
       userid: add.userId,
       description: add.description,
+     duration: add.duration,
       date:add.date
     });
     return newAdd.save()
@@ -90,21 +106,23 @@ function findUserId(user_id){
 app.get('/api/exercise/log',(req,res)=>{
   let userId= req.query.userId;
   let arr;
+  let length;
   findOut(userId).then((doc)=>{ 
+    length=doc.length;
     arr= doc.map((d)=>{
                 return {
                   description:d.description,
-                  duration:d.duration
+                  duration: d.duration,
+                  date:d.date
                 }
                 });
-    res.send(arr);
+    res.json({userid:userId, count:length, log:arr});
   })
 })
 
 function findOut(userId){
     let array= UserExerciseEntry.find({userid:userId});
-
-return array;
+    return array;
 }
 
 // Not found middleware
